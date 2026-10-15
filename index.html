@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Study Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ef;
+    --card: #ffffff;
+    --text: #2b2d33;
+    --muted: #8a8d96;
+    --border: #e7e3dc;
+    --accent: #5b7f6e;
+    --accent-soft: #e6eee9;
+    --danger: #c0625a;
+    --warn: #b7863a;
+    --shadow: 0 1px 2px rgba(40, 35, 25, .04), 0 8px 24px rgba(40, 35, 25, .06);
+    color-scheme: light;
+  }
+  [data-theme="dark"] {
+    --bg: #17191d;
+    --card: #20232a;
+    --text: #e6e4df;
+    --muted: #8b8f99;
+    --border: #2e323a;
+    --accent: #8fb8a3;
+    --accent-soft: #2a3631;
+    --danger: #e08a82;
+    --warn: #d9ad66;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .2), 0 8px 24px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", "Segoe UI", Tahoma, sans-serif;
+    font-size: 16px;
+    transition: background .3s, color .3s;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 48px 20px 64px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  h1 { margin: 0; font-size: 1.7rem; font-weight: 700; letter-spacing: -.01em; }
+  .date { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+
+  .icon-btn {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: border-color .2s, transform .1s;
+  }
+  .icon-btn:hover { border-color: var(--accent); }
+  .icon-btn:active { transform: scale(.95); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 4px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+  }
+  .tabs { overflow-x: auto; scrollbar-width: none; }
+  .tab {
+    flex: 1 1 auto;
+    white-space: nowrap;
+    border: none; background: transparent;
+    color: var(--muted);
+    font: inherit; font-weight: 500;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .tab.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .badge {
+    font-size: .75rem;
+    min-width: 22px; padding: 1px 7px;
+    border-radius: 99px;
+    background: var(--border);
+    color: var(--muted);
+  }
+  .tab.active .badge { background: var(--accent); color: var(--card); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  form.add { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; border-bottom: 1px solid var(--border); }
+  form.add input {
+    flex: 1 1 200px; min-width: 0;
+    border: 1px solid transparent;
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    padding: 12px 14px;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  form.add input:focus { border-color: var(--accent); }
+  form.add > button {
+    border: none;
+    background: var(--accent);
+    color: var(--card);
+    font: inherit; font-weight: 600;
+    padding: 0 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  form.add > button:hover { opacity: .88; }
+
+  .quick { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; position: relative; }
+  .quick-label { color: var(--muted); font-size: .85rem; margin-inline-end: 2px; }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font: inherit; font-size: .85rem;
+    padding: 6px 12px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s, color .2s;
+  }
+  .chip:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .chip small { color: var(--muted); margin-inline-start: 4px; }
+  .quick.invalid .chip { border-color: var(--danger); }
+  .quick input[type="date"] {
+    position: absolute; inset-inline-end: 0; bottom: 0;
+    width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none;
+  }
+  .form-error { flex-basis: 100%; color: var(--danger); font-size: .85rem; padding: 0 4px; }
+
+  /* Subjects: each one gets a hue (--h) so its chip and task tags share a colour. */
+  .subjects { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chip.subject.selected {
+    background: hsl(var(--h) 40% 90%);
+    border-color: hsl(var(--h) 35% 45%);
+    color: hsl(var(--h) 35% 28%);
+    font-weight: 600;
+  }
+  .chip.subject .x { margin-inline-start: 6px; color: var(--danger); font-weight: 600; }
+  .chip.ghost { border-style: dashed; color: var(--muted); background: transparent; }
+  .chip.ghost.on { border-style: solid; color: var(--danger); border-color: var(--danger); background: transparent; }
+  form.add .subjects input {
+    flex: 0 1 170px;
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: .85rem;
+    border-color: var(--accent);
+  }
+  .subj {
+    display: inline-block;
+    font-size: .75rem; font-weight: 600;
+    padding: 1px 9px;
+    border-radius: 99px;
+    margin-inline-end: 8px;
+    vertical-align: 1px;
+    background: hsl(var(--h) 40% 92%);
+    color: hsl(var(--h) 35% 32%);
+  }
+  li.done .subj { opacity: .55; }
+  [data-theme="dark"] .chip.subject.selected {
+    background: hsl(var(--h) 25% 24%);
+    border-color: hsl(var(--h) 35% 60%);
+    color: hsl(var(--h) 45% 80%);
+  }
+  [data-theme="dark"] .subj { background: hsl(var(--h) 25% 23%); color: hsl(var(--h) 45% 78%); }
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+  li:last-child { border-bottom: none; }
+  li.new { animation: in .25s ease; }
+  @keyframes in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  li[draggable="true"] { cursor: grab; }
+  li.dragging { opacity: .4; }
+
+  .grip {
+    flex-shrink: 0;
+    color: var(--muted);
+    opacity: .5;
+    display: grid; place-items: center;
+    margin-inline-end: -4px;
+  }
+  .grip svg { width: 14px; height: 14px; }
+  li:hover .grip { opacity: 1; }
+
+  .check {
+    flex-shrink: 0;
+    width: 24px; height: 24px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: background .2s, border-color .2s;
+    padding: 0;
+  }
+  .check:hover { border-color: var(--accent); }
+  .check svg { width: 14px; height: 14px; stroke: var(--card); opacity: 0; transition: opacity .2s; }
+  li.done .check { background: var(--accent); border-color: var(--accent); }
+  li.done .check svg { opacity: 1; }
+
+  .content { flex: 1; min-width: 0; }
+  .text { display: block; line-height: 1.6; word-wrap: break-word; transition: color .2s; }
+  li.done .text { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--muted); }
+  .due { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .due.soon { color: var(--warn); font-weight: 500; }
+  .due.overdue { color: var(--danger); font-weight: 500; }
+  li.done .due { color: var(--muted); font-weight: 400; }
+
+  .edit-wrap { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .edit-wrap input, .edit-wrap select {
+    font: inherit; color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 6px 10px;
+    outline: none;
+  }
+  .edit-input { flex: 1 1 180px; min-width: 0; }
+
+  .actions { display: flex; gap: 2px; opacity: 0; transition: opacity .2s; }
+  li:hover .actions, li:focus-within .actions { opacity: 1; }
+  @media (hover: none) { .actions { opacity: 1; } }
+  .act {
+    border: none; background: transparent;
+    color: var(--muted);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .act svg { width: 17px; height: 17px; }
+  .act:hover { background: var(--bg); color: var(--text); }
+  .act.del:hover { color: var(--danger); }
+
+  .section-label {
+    padding: 12px 16px 6px;
+    font-size: .8rem;
+    color: var(--muted);
+    font-weight: 500;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .link-btn {
+    border: none; background: none;
+    color: var(--muted);
+    font: inherit; font-size: .8rem;
+    cursor: pointer;
+    padding: 0;
+  }
+  .link-btn:hover { color: var(--danger); }
+
+  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty svg { width: 44px; height: 44px; margin-bottom: 10px; opacity: .5; }
+  .empty p { margin: 0; }
+
+  .hint { text-align: center; color: var(--muted); font-size: .8rem; padding: 10px; border-top: 1px solid var(--border); }
+
+  /* Exams view switch */
+  .view-bar {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .seg { display: inline-flex; background: var(--bg); border-radius: 10px; padding: 3px; }
+  .seg button {
+    border: none; background: transparent;
+    font: inherit; font-size: .85rem;
+    padding: 5px 14px;
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .seg button.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+  .cal-nav { display: flex; gap: 4px; }
+  .nav-btn {
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    font: inherit; font-size: .85rem;
+    min-width: 32px; padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Weekly calendar: one row per week, coloured by how many exams it has */
+  .cal { padding: 6px 12px 14px; }
+  .cal-dow, .days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .cal-dow { font-size: .72rem; color: var(--muted); text-align: center; padding: 6px 0 0; }
+  .week {
+    --lvl: var(--border);
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--lvl);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .week.lvl-1 { --lvl: var(--accent); }
+  .week.lvl-2 { --lvl: var(--warn); }
+  .week.lvl-3 { --lvl: var(--danger); }
+  .week-head {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 10px;
+    padding: 7px 10px;
+    font-size: .8rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .week-range { font-weight: 600; }
+  .this-week {
+    margin-inline-start: 8px;
+    font-size: .7rem; font-weight: 600;
+    padding: 1px 8px; border-radius: 99px;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .load { display: inline-flex; align-items: center; gap: 6px; color: var(--lvl); font-weight: 600; }
+  .lvl-0 .load { color: var(--muted); font-weight: 400; }
+  .meter { display: inline-flex; gap: 2px; }
+  .meter i { width: 6px; height: 11px; border-radius: 2px; background: var(--border); }
+  .meter i.f { background: var(--lvl); }
+  .day {
+    min-height: 70px;
+    padding: 4px;
+    border-inline-start: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 3px;
+    cursor: pointer;
+    min-width: 0;
+    transition: background .15s;
+  }
+  .day:first-child { border-inline-start: none; }
+  .day:hover { background: var(--accent-soft); }
+  .day.weekend { background: color-mix(in srgb, var(--bg) 60%, transparent); }
+  .day.weekend:hover { background: var(--accent-soft); }
+  .day.past .dnum, .day.past .ex { opacity: .45; }
+  .dnum {
+    font-size: .75rem; color: var(--muted);
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+  }
+  .day.today .dnum { background: var(--accent); color: var(--card); font-weight: 600; }
+  .ex {
+    font-size: .72rem; line-height: 1.3;
+    padding: 3px 5px;
+    border-radius: 6px;
+    background: hsl(var(--h) 40% 92%);
+    color: hsl(var(--h) 35% 26%);
+    border-inline-start: 3px solid hsl(var(--h) 40% 50%);
+    cursor: pointer;
+  }
+  .ex b, .ex span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ex b { font-weight: 700; }
+  .ex.done { opacity: .5; text-decoration: line-through; }
+  .ex:hover { filter: brightness(.96); }
+  [data-theme="dark"] .ex {
+    background: hsl(var(--h) 25% 23%);
+    color: hsl(var(--h) 45% 82%);
+    border-inline-start-color: hsl(var(--h) 40% 60%);
+  }
+
+  .footer { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; color: var(--muted); font-size: .8rem; margin-top: 18px; }
+  .footer .link-btn:hover { color: var(--accent); }
+  .footer .sep { opacity: .5; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px;
+    transform: translate(-50%, 20px);
+    background: var(--text); color: var(--bg);
+    padding: 10px 18px; border-radius: 10px;
+    font-size: .9rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s, transform .25s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>My Study Tasks</h1>
+      <div class="date" id="today"></div>
+    </div>
+    <button class="icon-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab" data-tab="study">Study <span class="badge" id="badge-study">0</span></button>
+    <button class="tab" data-tab="projects">Assignments &amp; Projects <span class="badge" id="badge-projects">0</span></button>
+    <button class="tab" data-tab="exams">Exams <span class="badge" id="badge-exams">0</span></button>
+  </nav>
+
+  <div class="card">
+    <form class="add" id="addForm" novalidate>
+      <div class="subjects" id="subjects"></div>
+      <input id="newTask" type="text" autocomplete="off" placeholder="Add a topic to study..." maxlength="200">
+      <button type="submit">Add</button>
+      <div class="quick" id="quick" hidden>
+        <span class="quick-label" id="quickLabel">Due:</span>
+        <button type="button" class="chip" data-days="0">Today</button>
+        <button type="button" class="chip" data-days="1">Tomorrow</button>
+        <button type="button" class="chip" data-days="3">In 3 days</button>
+        <button type="button" class="chip" data-days="7">Next week</button>
+        <button type="button" class="chip" id="pickDate">Pick date…</button>
+        <input id="newDate" type="date" tabindex="-1" aria-hidden="true">
+      </div>
+      <div class="form-error" id="formError" hidden></div>
+    </form>
+    <div id="list"></div>
+  </div>
+
+  <div class="footer">
+    <span>Saved automatically on this device</span>
+    <span class="sep">·</span>
+    <button class="link-btn" id="exportBtn">Export backup</button>
+    <button class="link-btn" id="importBtn">Import backup</button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const ICONS = {
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+    del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>',
+    grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>'
+  };
+
+  const TABS = {
+    study: { placeholder: 'Add a topic to study...', empty: 'No study topics yet' },
+    projects: { placeholder: 'Add an assignment or project...', empty: 'No assignments or projects yet', dated: true, draggable: true, dateLabel: 'Due:' },
+    exams: { placeholder: 'Add an exam...', empty: 'No exams yet', dated: true, sortByDate: true, dateLabel: 'Exam on:' }
+  };
+
+  const STORAGE_KEY = 'study-todo-data';
+  let data = load();
+  let currentTab = localStorage.getItem('study-todo-tab') || 'study';
+  let editingId = null;
+  let newId = null;
+
+  function load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (saved && saved.study && saved.projects) return { exams: [], subjects: [], ...saved };
+    } catch (e) {}
+    return { study: [], projects: [], exams: [], subjects: [] };
+  }
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+  function makeId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  const listEl = document.getElementById('list');
+  const input = document.getElementById('newTask');
+  const dateInput = document.getElementById('newDate');
+  const quickEl = document.getElementById('quick');
+  const formError = document.getElementById('formError');
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ---- Subjects ----
+  const HUES = [150, 210, 25, 280, 340, 45, 190, 0, 100, 250];
+  function subjectHue(name) {
+    const i = data.subjects.indexOf(name);
+    if (i >= 0) return HUES[i % HUES.length];
+    let h = 0;
+    for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
+    return h;
+  }
+  function subjectTag(name) {
+    return name ? `<span class="subj" style="--h:${subjectHue(name)}">${escapeHtml(name)}</span>` : '';
+  }
+
+  const subjectsEl = document.getElementById('subjects');
+  let selectedSubject = localStorage.getItem('study-todo-subject') || null;
+  if (!data.subjects.includes(selectedSubject)) selectedSubject = null;
+  let addingSubject = false;
+  let editingSubjects = false;
+
+  function selectSubject(name) {
+    selectedSubject = name;
+    if (name) localStorage.setItem('study-todo-subject', name);
+    else localStorage.removeItem('study-todo-subject');
+    renderSubjects();
+    updatePlaceholder();
+  }
+
+  function renderSubjects() {
+    const chips = data.subjects.map(s => {
+      const sel = s === selectedSubject && !editingSubjects;
+      return `<button type="button" class="chip subject${sel ? ' selected' : ''}" data-subject="${escapeHtml(s)}" style="--h:${subjectHue(s)}"
+        title="${editingSubjects ? 'Remove subject' : 'Choose subject'}">${escapeHtml(s)}${editingSubjects ? '<span class="x">×</span>' : ''}</button>`;
+    }).join('');
+    const adder = addingSubject
+      ? `<input class="subject-input" type="text" maxlength="30" placeholder="Subject name">`
+      : (editingSubjects ? '' : `<button type="button" class="chip ghost" data-sact="add">+ Add subject</button>`);
+    const editBtn = data.subjects.length
+      ? `<button type="button" class="chip ghost${editingSubjects ? ' on' : ''}" data-sact="edit">${editingSubjects ? 'Done' : 'Remove…'}</button>`
+      : '';
+    subjectsEl.innerHTML = `<span class="quick-label">Subject:</span>${chips}${adder}${editBtn}`;
+    const si = subjectsEl.querySelector('.subject-input');
+    if (si) si.focus();
+  }
+
+  function commitSubject(el, keep) {
+    if (!addingSubject) return;
+    addingSubject = false;
+    const name = el.value.trim();
+    if (keep && name) {
+      const existing = data.subjects.find(s => s.toLowerCase() === name.toLowerCase());
+      if (!existing) { data.subjects.push(name); save(); }
+      selectSubject(existing || name);
+    } else {
+      renderSubjects();
+    }
+    input.focus();
+  }
+
+  subjectsEl.addEventListener('click', e => {
+    const chip = e.target.closest('[data-subject]');
+    if (chip) {
+      const name = chip.dataset.subject;
+      if (editingSubjects) {
+        data.subjects = data.subjects.filter(s => s !== name);
+        if (!data.subjects.length) editingSubjects = false;
+        save();
+        if (selectedSubject === name) selectSubject(null); else renderSubjects();
+        render();
+      } else {
+        selectSubject(selectedSubject === name ? null : name);
+        input.focus();
+      }
+      return;
+    }
+    const act = e.target.closest('[data-sact]');
+    if (!act) return;
+    if (act.dataset.sact === 'add') { addingSubject = true; renderSubjects(); }
+    if (act.dataset.sact === 'edit') { editingSubjects = !editingSubjects; renderSubjects(); }
+  });
+  subjectsEl.addEventListener('keydown', e => {
+    if (!e.target.classList.contains('subject-input')) return;
+    if (e.key === 'Enter') { e.preventDefault(); commitSubject(e.target, true); }
+    if (e.key === 'Escape') commitSubject(e.target, false);
+  });
+  subjectsEl.addEventListener('focusout', e => {
+    if (e.target.classList.contains('subject-input')) commitSubject(e.target, true);
+  });
+
+  function updatePlaceholder() {
+    input.placeholder = selectedSubject
+      ? (currentTab === 'exams' ? `${selectedSubject} exam — e.g. Midterm, Chapter 3...` : `Lesson or topic in ${selectedSubject}...`)
+      : TABS[currentTab].placeholder;
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  // Due dates are stored as "YYYY-MM-DD" and compared in local time.
+  function parseDate(s) {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function dueHtml(t) {
+    if (!t.due) return '';
+    const due = parseDate(t.due);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const days = Math.round((due - today) / 864e5);
+    const date = due.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const plural = n => n === 1 ? '' : 's';
+    let label, cls = '';
+    if (currentTab === 'exams') {
+      if (t.done || days < 0) label = `Exam was on ${date}`;
+      else if (days === 0) { label = 'Exam today'; cls = 'overdue'; }
+      else if (days === 1) { label = 'Exam tomorrow'; cls = 'overdue'; }
+      else { label = `${date} · in ${days} days`; if (days <= 7) cls = 'soon'; }
+    }
+    else if (t.done) label = `Due ${date}`;
+    else if (days < 0) { label = `Overdue by ${-days} day${plural(-days)} · ${date}`; cls = 'overdue'; }
+    else if (days === 0) { label = 'Due today'; cls = 'soon'; }
+    else if (days === 1) { label = 'Due tomorrow'; cls = 'soon'; }
+    else { label = `Due ${date} · in ${days} days`; if (days <= 3) cls = 'soon'; }
+    return `<span class="due ${cls}">${label}</span>`;
+  }
+
+  function itemHtml(t) {
+    const tab = TABS[currentTab];
+    const editing = t.id === editingId;
+    const draggable = tab.draggable && !t.done && !editing;
+    const subjectOptions = [...new Set([...data.subjects, ...(t.subject ? [t.subject] : [])])]
+      .map(s => `<option value="${escapeHtml(s)}"${s === t.subject ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('');
+    const body = editing
+      ? `<div class="edit-wrap">
+          ${subjectOptions ? `<select class="edit-subject"><option value="">No subject</option>${subjectOptions}</select>` : ''}
+          <input class="edit-input" value="${escapeHtml(t.text)}" maxlength="200">
+          ${tab.dated ? `<input class="edit-date" type="date" value="${t.due || ''}">` : ''}
+        </div>`
+      : `<div class="content"><span class="text">${subjectTag(t.subject)}${escapeHtml(t.text)}</span>${tab.dated ? dueHtml(t) : ''}</div>`;
+    return `<li class="${t.done ? 'done' : ''} ${t.id === newId ? 'new' : ''}" data-id="${t.id}"${draggable ? ' draggable="true"' : ''}>
+      ${draggable ? `<span class="grip" title="Drag to reorder">${ICONS.grip}</span>` : ''}
+      <button class="check" data-action="toggle" aria-label="${t.done ? 'Mark as not done' : 'Mark as done'}">${ICONS.check}</button>
+      ${body}
+      <div class="actions">
+        <button class="act" data-action="edit" title="Edit">${ICONS.edit}</button>
+        <button class="act del" data-action="delete" title="Delete">${ICONS.del}</button>
+      </div>
+    </li>`;
+  }
+
+  function render() {
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
+    for (const k of Object.keys(TABS)) {
+      document.getElementById('badge-' + k).textContent = data[k].filter(t => !t.done).length;
+    }
+    const tab = TABS[currentTab];
+    updatePlaceholder();
+    quickEl.hidden = !tab.dated;
+    if (tab.dated) document.getElementById('quickLabel').textContent = tab.dateLabel;
+
+    const viewBar = currentTab === 'exams' ? examViewBar() : '';
+    if (currentTab === 'exams' && examView === 'calendar') {
+      listEl.innerHTML = viewBar + calendarHtml();
+      newId = null;
+      return;
+    }
+
+    const items = data[currentTab];
+    if (!items.length) {
+      listEl.innerHTML = `${viewBar}<div class="empty">${ICONS.book}<p>${tab.empty}</p></div>`;
+      return;
+    }
+    const pending = items.filter(t => !t.done);
+    const done = items.filter(t => t.done);
+    // Exams always show nearest first; "YYYY-MM-DD" strings sort correctly as text.
+    if (tab.sortByDate) pending.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+    let html = '';
+    if (pending.length) {
+      html += `<ul id="pendingList">${pending.map(itemHtml).join('')}</ul>`;
+      if (tab.draggable && pending.length > 1) html += `<div class="hint">Drag items to put the most important first</div>`;
+    } else {
+      html += `<div class="empty"><p>Well done! Everything is finished 🎉</p></div>`;
+    }
+    if (done.length) {
+      html += `<div class="section-label"><span>Completed (${done.length})</span><button class="link-btn" data-action="clear-done">Clear completed</button></div>`;
+      html += `<ul>${done.map(itemHtml).join('')}</ul>`;
+    }
+    listEl.innerHTML = viewBar + html;
+    newId = null;
+
+    const editInput = listEl.querySelector('.edit-input');
+    if (editInput) { editInput.focus(); editInput.select(); }
+  }
+
+  // ---- Exams: list / weekly calendar ----
+  let examView = localStorage.getItem('study-todo-exam-view') === 'calendar' ? 'calendar' : 'list';
+  let calOffset = 0; // in weeks, relative to the current week
+  const CAL_WEEKS = 6;
+  const LOAD = [
+    { name: 'Free', cls: 'lvl-0' },
+    { name: 'Light', cls: 'lvl-1' },
+    { name: 'Moderate', cls: 'lvl-2' },
+    { name: 'Busy', cls: 'lvl-3' }
+  ];
+
+  function examViewBar() {
+    const nav = examView === 'calendar'
+      ? `<div class="cal-nav">
+          <button class="nav-btn" data-action="cal-prev" title="Earlier weeks">‹</button>
+          <button class="nav-btn" data-action="cal-today">This week</button>
+          <button class="nav-btn" data-action="cal-next" title="Later weeks">›</button>
+        </div>`
+      : '';
+    return `<div class="view-bar">
+      <div class="seg">
+        <button class="${examView === 'list' ? 'on' : ''}" data-action="view" data-view="list">List</button>
+        <button class="${examView === 'calendar' ? 'on' : ''}" data-action="view" data-view="calendar">Calendar</button>
+      </div>${nav}
+    </div>`;
+  }
+
+  function weekRange(start) {
+    const end = new Date(start); end.setDate(end.getDate() + 6);
+    const m = d => d.toLocaleDateString('en-US', { month: 'short' });
+    return start.getMonth() === end.getMonth()
+      ? `${m(start)} ${start.getDate()} – ${end.getDate()}`
+      : `${m(start)} ${start.getDate()} – ${m(end)} ${end.getDate()}`;
+  }
+
+  function calendarHtml() {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayISO = toISODate(today);
+    const first = new Date(today);
+    first.setDate(first.getDate() - first.getDay() + calOffset * 7); // weeks start on Sunday
+
+    const byDate = {};
+    for (const t of data.exams) if (t.due) (byDate[t.due] = byDate[t.due] || []).push(t);
+
+    const dow = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let html = `<div class="cal"><div class="cal-dow">${dow.map(d => `<span>${d}</span>`).join('')}</div>`;
+
+    for (let w = 0; w < CAL_WEEKS; w++) {
+      const start = new Date(first); start.setDate(start.getDate() + w * 7);
+      let days = '', count = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(start); d.setDate(d.getDate() + i);
+        const iso = toISODate(d);
+        const exams = byDate[iso] || [];
+        count += exams.filter(t => !t.done).length;
+        const chips = exams.map(t => `<div class="ex${t.done ? ' done' : ''}" data-action="cal-exam" data-id="${t.id}"
+            style="--h:${t.subject ? subjectHue(t.subject) : 150}" title="${escapeHtml((t.subject ? t.subject + ' — ' : '') + t.text)}">
+            ${t.subject ? `<b>${escapeHtml(t.subject)}</b>` : ''}<span>${escapeHtml(t.text)}</span></div>`).join('');
+        const cls = ['day', iso === todayISO ? 'today' : '', d < today ? 'past' : '', i >= 5 ? 'weekend' : ''].join(' ');
+        days += `<div class="${cls}" data-action="cal-day" data-date="${iso}" title="Add exam on ${d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}">
+          <span class="dnum">${d.getDate()}</span>${chips}</div>`;
+      }
+      const load = LOAD[Math.min(count, 3)];
+      const isThisWeek = calOffset + w === 0;
+      html += `<div class="week ${load.cls}">
+        <div class="week-head">
+          <span class="week-range">${weekRange(start)}${isThisWeek ? '<span class="this-week">This week</span>' : ''}</span>
+          <span class="load"><span class="meter">${[1, 2, 3].map(n => `<i class="${count >= n ? 'f' : ''}"></i>`).join('')}</span>
+            ${load.name}${count ? ` · ${count} exam${count === 1 ? '' : 's'}` : ''}</span>
+        </div>
+        <div class="days">${days}</div>
+      </div>`;
+    }
+    return html + `</div><div class="hint">Type an exam above, then click a day to add it</div>`;
+  }
+
+  function showFormError(msg, onChips) {
+    formError.textContent = msg;
+    formError.hidden = !msg;
+    quickEl.classList.toggle('invalid', !!msg && !!onChips);
+  }
+
+  function toISODate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function addTask(due) {
+    const text = input.value.trim();
+    if (!text) {
+      showFormError(due ? 'Type it first, then choose the date.' : '');
+      input.focus();
+      return;
+    }
+    const dated = TABS[currentTab].dated;
+    if (dated && !due) {
+      showFormError(currentTab === 'exams' ? 'Choose the exam date:' : 'Choose when it\'s due:', true);
+      return;
+    }
+    const task = { id: makeId(), text, done: false };
+    if (selectedSubject) task.subject = selectedSubject;
+    if (dated) task.due = due;
+    showFormError('');
+    data[currentTab].unshift(task);
+    newId = task.id;
+    input.value = '';
+    save(); render();
+    input.focus();
+  }
+
+  document.getElementById('addForm').addEventListener('submit', e => {
+    e.preventDefault();
+    addTask(null);
+  });
+
+  // Quick due-date buttons add the task in one click.
+  quickEl.addEventListener('click', e => {
+    const chip = e.target.closest('[data-days]');
+    if (!chip) return;
+    const d = new Date();
+    d.setDate(d.getDate() + Number(chip.dataset.days));
+    addTask(toISODate(d));
+  });
+  document.getElementById('pickDate').addEventListener('click', () => {
+    if (!input.value.trim()) {
+      showFormError('Type it first, then choose the date.');
+      input.focus();
+      return;
+    }
+    dateInput.value = '';
+    try { dateInput.showPicker(); }
+    catch (err) { dateInput.style.cssText = 'position:static;width:auto;height:auto;opacity:1;pointer-events:auto'; dateInput.focus(); }
+  });
+  dateInput.addEventListener('change', () => {
+    if (dateInput.value) addTask(dateInput.value);
+  });
+
+  // Label the quick buttons with the weekday they land on.
+  quickEl.querySelectorAll('[data-days]').forEach(chip => {
+    const days = Number(chip.dataset.days);
+    if (days < 2) return;
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    chip.insertAdjacentHTML('beforeend', `<small>${d.toLocaleDateString('en-US', { weekday: 'short' })}</small>`);
+  });
+
+  listEl.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    if (action === 'clear-done') {
+      data[currentTab] = data[currentTab].filter(t => !t.done);
+      save(); render(); return;
+    }
+    if (action === 'view') {
+      examView = btn.dataset.view;
+      localStorage.setItem('study-todo-exam-view', examView);
+      render(); return;
+    }
+    if (action === 'cal-prev' || action === 'cal-next' || action === 'cal-today') {
+      calOffset = action === 'cal-today' ? 0 : calOffset + (action === 'cal-next' ? 4 : -4);
+      render(); return;
+    }
+    if (action === 'cal-day') {
+      if (!input.value.trim()) {
+        showFormError('Type the exam name above, then click the day.');
+        input.focus();
+        return;
+      }
+      addTask(btn.dataset.date); return;
+    }
+    if (action === 'cal-exam') {
+      // Open the exam for editing in the list view.
+      examView = 'list';
+      localStorage.setItem('study-todo-exam-view', examView);
+      editingId = btn.dataset.id;
+      render(); return;
+    }
+    const id = btn.closest('li').dataset.id;
+    const items = data[currentTab];
+    const task = items.find(t => t.id === id);
+    if (action === 'toggle') task.done = !task.done;
+    if (action === 'delete') data[currentTab] = items.filter(t => t.id !== id);
+    if (action === 'edit') { editingId = id; render(); return; }
+    save(); render();
+  });
+
+  listEl.addEventListener('dblclick', e => {
+    const li = e.target.closest('li');
+    if (li && e.target.classList.contains('text')) { editingId = li.dataset.id; render(); }
+  });
+
+  function finishEdit(wrap, keep) {
+    if (editingId === null) return;
+    const task = data[currentTab].find(t => t.id === editingId);
+    editingId = null;
+    if (keep && task) {
+      const text = wrap.querySelector('.edit-input').value.trim();
+      const date = wrap.querySelector('.edit-date');
+      const subject = wrap.querySelector('.edit-subject');
+      if (text) task.text = text;
+      if (date && date.value) task.due = date.value;
+      if (subject) { if (subject.value) task.subject = subject.value; else delete task.subject; }
+    }
+    save(); render();
+  }
+  listEl.addEventListener('keydown', e => {
+    const wrap = e.target.closest('.edit-wrap');
+    if (!wrap) return;
+    if (e.key === 'Enter') finishEdit(wrap, true);
+    if (e.key === 'Escape') finishEdit(wrap, false);
+  });
+  listEl.addEventListener('focusout', e => {
+    const wrap = e.target.closest('.edit-wrap');
+    // Moving focus between the text and date fields keeps the edit open.
+    if (wrap && !wrap.contains(e.relatedTarget)) finishEdit(wrap, true);
+  });
+
+  // Drag and drop reordering (pending assignments & projects only).
+  let dragEl = null;
+  listEl.addEventListener('dragstart', e => {
+    const li = e.target.closest('li[draggable="true"]');
+    if (!li) return;
+    dragEl = li;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', li.dataset.id);
+    requestAnimationFrame(() => li.classList.add('dragging'));
+  });
+  listEl.addEventListener('dragover', e => {
+    if (!dragEl) return;
+    e.preventDefault();
+    const li = e.target.closest('li[draggable="true"]');
+    if (!li || li === dragEl || li.parentNode !== dragEl.parentNode) return;
+    const r = li.getBoundingClientRect();
+    const after = e.clientY > r.top + r.height / 2;
+    li.parentNode.insertBefore(dragEl, after ? li.nextSibling : li);
+  });
+  listEl.addEventListener('drop', e => { if (dragEl) e.preventDefault(); });
+  listEl.addEventListener('dragend', () => {
+    if (!dragEl) return;
+    const order = [...dragEl.parentNode.children].map(li => li.dataset.id);
+    dragEl.classList.remove('dragging');
+    dragEl = null;
+    const byId = new Map(data.projects.map(t => [t.id, t]));
+    data.projects = [...order.map(id => byId.get(id)), ...data.projects.filter(t => t.done)];
+    save(); render();
+  });
+
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+    currentTab = b.dataset.tab;
+    editingId = null;
+    showFormError('');
+    localStorage.setItem('study-todo-tab', currentTab);
+    render();
+    input.focus();
+  }));
+
+  // Backup export / import
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const backup = { app: 'study-tasks', version: 1, exportedAt: new Date().toISOString(), data };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `study-tasks-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Backup downloaded');
+  });
+
+  const importFile = document.getElementById('importFile');
+  document.getElementById('importBtn').addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', async () => {
+    const file = importFile.files[0];
+    importFile.value = '';
+    if (!file) return;
+    let imported;
+    try { imported = normalizeBackup(JSON.parse(await file.text())); } catch (e) {}
+    if (!imported) { toast('That file is not a valid backup'); return; }
+    const count = imported.study.length + imported.projects.length + imported.exams.length;
+    if (!confirm(`Replace your current tasks with the ${count} task${count === 1 ? '' : 's'} in this backup?`)) return;
+    data = imported;
+    editingId = null;
+    if (!data.subjects.includes(selectedSubject)) selectedSubject = null;
+    save(); renderSubjects(); render();
+    toast('Backup imported');
+  });
+
+  function normalizeBackup(obj) {
+    const d = obj && obj.data ? obj.data : obj;
+    if (!d || !Array.isArray(d.study) || !Array.isArray(d.projects)) return null;
+    const clean = arr => arr
+      .filter(t => t && typeof t.text === 'string' && t.text.trim())
+      .map(t => {
+        const task = { id: String(t.id || makeId()), text: t.text.slice(0, 200), done: !!t.done };
+        if (typeof t.due === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(t.due)) task.due = t.due;
+        if (typeof t.subject === 'string' && t.subject.trim()) task.subject = t.subject.slice(0, 30);
+        return task;
+      });
+    const subjects = Array.isArray(d.subjects)
+      ? [...new Set(d.subjects.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim().slice(0, 30)))]
+      : [];
+    return { study: clean(d.study), projects: clean(d.projects), exams: clean(Array.isArray(d.exams) ? d.exams : []), subjects };
+  }
+
+  const themeBtn = document.getElementById('themeBtn');
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    themeBtn.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
+    localStorage.setItem('study-todo-theme', theme);
+  }
+  themeBtn.addEventListener('click', () => {
+    applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  });
+  applyTheme(localStorage.getItem('study-todo-theme') ||
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+  document.getElementById('today').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+
+  renderSubjects();
+  render();
+</script>
+</body>
+</html>
