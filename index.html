@@ -48,9 +48,33 @@
   }
   .wrap { max-width: 640px; margin: 0 auto; padding: 48px 20px 64px; }
 
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-  h1 { margin: 0; font-size: 1.7rem; font-weight: 700; letter-spacing: -.01em; }
-  .date { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -.01em; }
+  .date { color: var(--muted); font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+
+  /* Today summary cards */
+  .summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .sum-card {
+    --tone: var(--accent);
+    display: flex; flex-direction: column; gap: 4px; min-width: 0;
+    text-align: start;
+    font: inherit; color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--tone);
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .2s;
+  }
+  .sum-card:hover { transform: translateY(-2px); }
+  .sum-label { font-size: .7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .sum-value { font-size: .95rem; font-weight: 600; color: var(--tone); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tone-warn { --tone: var(--warn); }
+  .tone-danger { --tone: var(--danger); }
+  .tone-muted { --tone: var(--border); }
+  .tone-muted .sum-value { color: var(--muted); font-weight: 500; }
 
   .icon-btn {
     border: 1px solid var(--border);
@@ -67,6 +91,7 @@
   .icon-btn svg { width: 20px; height: 20px; }
 
   .tabs {
+    position: relative;
     display: flex; gap: 4px;
     background: var(--card);
     border: 1px solid var(--border);
@@ -74,9 +99,9 @@
     border-radius: 14px;
     margin-bottom: 20px;
   }
-  .tabs { overflow-x: auto; scrollbar-width: none; }
   .tab {
     flex: 1 1 auto;
+    min-width: 0;
     white-space: nowrap;
     border: none; background: transparent;
     color: var(--muted);
@@ -87,7 +112,24 @@
     transition: background .2s, color .2s;
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-  .tab.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .tab { position: relative; z-index: 1; }
+  .tab.active { color: var(--accent); font-weight: 600; }
+  .tab-ind {
+    position: absolute; z-index: 0;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    pointer-events: none;
+  }
+  .tab-ind.ready { transition: left .32s cubic-bezier(.2, .8, .2, 1), width .32s cubic-bezier(.2, .8, .2, 1), top .32s; }
+  .tab svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .tab-label { overflow: hidden; text-overflow: ellipsis; }
+
+  /* Title row above the card; holds List/Calendar and week navigation */
+  .section-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 2px 10px; min-height: 34px; }
+  .section-bar h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+  .section-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .fade { animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .badge {
     font-size: .75rem;
     min-width: 22px; padding: 1px 7px;
@@ -105,7 +147,7 @@
     overflow: hidden;
   }
 
-  form.add { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; border-bottom: 1px solid var(--border); }
+  form.add { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
   form.add input {
     flex: 1 1 200px; min-width: 0;
     border: 1px solid transparent;
@@ -136,8 +178,8 @@
     border: 1px solid var(--border);
     background: var(--card);
     color: var(--text);
-    font: inherit; font-size: .85rem;
-    padding: 6px 12px;
+    font: inherit; font-size: .8rem;
+    padding: 5px 11px;
     border-radius: 99px;
     cursor: pointer;
     transition: border-color .2s, background .2s, color .2s;
@@ -284,13 +326,8 @@
 
   .hint { text-align: center; color: var(--muted); font-size: .8rem; padding: 10px; border-top: 1px solid var(--border); }
 
-  /* Exams view switch */
-  .view-bar {
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .seg { display: inline-flex; background: var(--bg); border-radius: 10px; padding: 3px; }
+  /* List / Calendar switch */
+  .seg { display: inline-flex; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
   .seg button {
     border: none; background: transparent;
     font: inherit; font-size: .85rem;
@@ -299,7 +336,7 @@
     color: var(--muted);
     cursor: pointer;
   }
-  .seg button.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+  .seg button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
   .cal-nav { display: flex; gap: 4px; }
   .nav-btn {
     border: 1px solid var(--border); background: var(--card); color: var(--text);
@@ -435,24 +472,122 @@
     transition: opacity .25s, transform .25s;
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Item motion: removal folds the row away */
+  li.leaving {
+    opacity: 0; transform: translateX(16px);
+    height: 0 !important; padding-top: 0; padding-bottom: 0; border-bottom-width: 0;
+    overflow: hidden;
+    transition: opacity .2s, transform .2s, height .26s ease .05s, padding .26s ease .05s;
+  }
+
+  /* Progress ring on the Today card */
+  .sum-card { position: relative; }
+  .sum-card.has-ring { padding-inline-end: 52px; }
+  .ring { position: absolute; inset-inline-end: 12px; top: 50%; width: 32px; height: 32px; margin-top: -16px; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 4; }
+  .ring-bg { stroke: var(--border); }
+  .ring-fg { stroke: var(--tone); stroke-linecap: round; stroke-dasharray: 100; transition: stroke-dashoffset .6s cubic-bezier(.2, .8, .2, 1); }
+  .sum-value.bump { animation: bump .45s ease; }
+  @keyframes bump { 0% { transform: translateY(5px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+  /* Press feedback */
+  .chip, .nav-btn, form.add > button, .tab, .sum-card, .check, .seg button, .act, .icon-btn {
+    transition-property: transform, background, border-color, color, box-shadow, opacity;
+    transition-duration: .15s;
+  }
+  .chip:active, .nav-btn:active, form.add > button:active, .seg button:active, .act:active { transform: scale(.94); }
+  .tab:active, .sum-card:active { transform: scale(.97); }
+  .check:active { transform: scale(.85); }
+
+  /* Theme switch: colours fade for a moment, the icon spins */
+  .theme-anim, .theme-anim *, .theme-anim *::before, .theme-anim *::after {
+    transition: background-color .4s ease, color .4s ease, border-color .4s ease, fill .4s ease, stroke .4s ease, box-shadow .4s ease !important;
+  }
+  .icon-btn.spin svg { animation: spin .5s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes spin { from { transform: rotate(-180deg) scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* Tick animation and end-of-day confetti */
+  li.pop .check { animation: pop .4s ease; }
+  li.pop .text { animation: strike .5s ease; }
+  @keyframes pop { 0% { transform: scale(.6); } 55% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  @keyframes strike { from { text-decoration-color: transparent; } }
+  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
+  .confetti i { position: absolute; top: -14px; width: 8px; height: 12px; border-radius: 2px; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translate(var(--dx), 105vh) rotate(var(--rot)); } }
+  @media (prefers-reduced-motion: reduce) {
+    .fade, li.pop .check, li.pop .text, li.new, .sum-value.bump, .icon-btn.spin svg { animation: none; }
+    .tab-ind.ready, .ring-fg { transition: none; }
+  }
+
+  /* Phones: tabs become a bottom bar with icons, and chip rows scroll sideways instead of stacking */
+  @media (max-width: 640px) {
+    .wrap { padding: 22px 14px calc(92px + env(safe-area-inset-bottom, 0px)); }
+    h1 { font-size: 1.35rem; }
+    .summary { gap: 8px; }
+    .sum-card { padding: 10px; }
+    .sum-value { font-size: .85rem; white-space: normal; }
+    /* Small ring tucked in the corner so the text keeps the full card width */
+    .sum-card.has-ring { padding-inline-end: 10px; }
+    .sum-card.has-ring .sum-label { padding-inline-end: 24px; }
+    .ring { top: 8px; margin-top: 0; inset-inline-end: 8px; width: 22px; height: 22px; }
+    .ring circle { stroke-width: 5; }
+    .tabs {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+      margin: 0;
+      border: none; border-top: 1px solid var(--border); border-radius: 0;
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+      background: color-mix(in srgb, var(--card) 90%, transparent);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, .06);
+      overflow: visible;
+    }
+    .tab { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 6px 2px; font-size: .68rem; position: relative; }
+    .tab svg { width: 22px; height: 22px; }
+    .tab .badge { position: absolute; top: 2px; left: calc(50% + 5px); font-size: .6rem; min-width: 16px; line-height: 16px; padding: 0 4px; }
+    .subjects, .quick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .subjects::-webkit-scrollbar, .quick::-webkit-scrollbar { display: none; }
+    .chip, .quick-label { flex-shrink: 0; }
+    .toast { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>My Study Tasks</h1>
       <div class="date" id="today"></div>
+      <h1 id="greeting">Hello</h1>
     </div>
     <button class="icon-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
   </header>
 
-  <nav class="tabs">
-    <button class="tab" data-tab="study">Study <span class="badge" id="badge-study">0</span></button>
-    <button class="tab" data-tab="projects">Assignments &amp; Projects <span class="badge" id="badge-projects">0</span></button>
-    <button class="tab" data-tab="exams">Exams <span class="badge" id="badge-exams">0</span></button>
-    <button class="tab" data-tab="overview">Overview</button>
+  <div class="summary" id="summary"></div>
+
+  <nav class="tabs" id="tabs">
+    <span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+    <button class="tab" data-tab="study">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>
+      <span class="tab-label">Study</span><span class="badge" id="badge-study">0</span>
+    </button>
+    <button class="tab" data-tab="projects">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 11h6M9 15h4"/></svg>
+      <span class="tab-label">Assignments</span><span class="badge" id="badge-projects">0</span>
+    </button>
+    <button class="tab" data-tab="exams">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+      <span class="tab-label">Exams</span><span class="badge" id="badge-exams">0</span>
+    </button>
+    <button class="tab" data-tab="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span class="tab-label">Overview</span>
+    </button>
   </nav>
+
+  <div class="section-bar">
+    <h2 id="sectionTitle"></h2>
+    <div class="section-tools" id="sectionTools"></div>
+  </div>
 
   <div class="card">
     <form class="add" id="addForm" novalidate>
@@ -510,6 +645,40 @@
   let currentTab = localStorage.getItem('study-todo-tab') || 'study';
   let editingId = null;
   let newId = null;
+  let poppedId = null; // item just ticked, animated once
+  let renderedTab = null; // tab shown by the previous render, so items only glide within the same tab
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // FLIP: remember where each item was, then slide it from there to its new place after re-rendering.
+  function itemPositions() {
+    const pos = new Map();
+    listEl.querySelectorAll('li[data-id]').forEach(li => pos.set(li.dataset.id, li.getBoundingClientRect().top));
+    return pos;
+  }
+  function glideFrom(before) {
+    listEl.querySelectorAll('li[data-id]').forEach(li => {
+      const old = before.get(li.dataset.id);
+      if (old === undefined) return;
+      const dy = old - li.getBoundingClientRect().top;
+      if (Math.abs(dy) < 1) return;
+      li.style.transition = 'none';
+      li.style.transform = `translateY(${dy}px)`;
+      void li.offsetWidth;
+      li.style.transition = 'transform .38s cubic-bezier(.2, .8, .2, 1)';
+      li.style.transform = '';
+      li.addEventListener('transitionend', () => { li.style.transition = ''; }, { once: true });
+    });
+  }
+  // Fade and fold items away, then run the change that removes them.
+  function removeAnimated(lis, then) {
+    if (!lis.length || reduceMotion()) { then(); return; }
+    lis.forEach(li => {
+      li.style.height = li.offsetHeight + 'px';
+      void li.offsetWidth;
+      li.classList.add('leaving');
+    });
+    setTimeout(then, 260);
+  }
 
   function load() {
     try {
@@ -620,9 +789,12 @@
   });
 
   function updatePlaceholder() {
-    input.placeholder = selectedSubject
-      ? (currentTab === 'exams' ? `${selectedSubject} exam — e.g. Midterm, Chapter 3...` : `Lesson or topic in ${selectedSubject}...`)
-      : TABS[currentTab].placeholder;
+    const subjectHints = {
+      study: `Lesson or topic in ${selectedSubject}...`,
+      projects: `Assignment or project in ${selectedSubject}...`,
+      exams: `${selectedSubject} exam — e.g. Midterm, Chapter 3...`
+    };
+    input.placeholder = (selectedSubject && subjectHints[currentTab]) || TABS[currentTab].placeholder;
   }
 
   let toastTimer;
@@ -681,7 +853,7 @@
           ${tab.dated || tab.optionalDate ? `<input class="edit-date" type="date" value="${t.due || ''}" title="${tab.optionalDate ? 'Leave empty for no date' : 'Date'}">` : ''}
         </div>`
       : `<div class="content"><span class="text">${subjectTag(t.subject)}${escapeHtml(t.text)}</span>${tab.dated || tab.optionalDate ? dueHtml(t) : ''}</div>`;
-    return `<li class="${t.done ? 'done' : ''} ${t.id === newId ? 'new' : ''}" data-id="${t.id}"${draggable ? ' draggable="true"' : ''}>
+    return `<li class="${t.done ? 'done' : ''} ${t.id === newId ? 'new' : ''} ${t.id === poppedId ? 'pop' : ''}" data-id="${t.id}"${draggable ? ' draggable="true"' : ''}>
       ${draggable ? `<span class="grip" title="Drag to reorder">${ICONS.grip}</span>` : ''}
       <button class="check" data-action="toggle" aria-label="${t.done ? 'Mark as not done' : 'Mark as done'}">${ICONS.check}</button>
       ${body}
@@ -693,31 +865,38 @@
   }
 
   function render() {
+    const before = renderedTab === currentTab && !reduceMotion() ? itemPositions() : null;
+    renderedTab = currentTab;
     document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
     const todayISO = toISODate(new Date());
     for (const k of Object.keys(TABS)) {
       if (TABS[k].overview) continue;
       // Study's list is a daily plan, so its badge counts only today's lessons.
-      document.getElementById('badge-' + k).textContent =
-        data[k].filter(t => !t.done && (k !== 'study' || t.due === todayISO)).length;
+      const n = data[k].filter(t => !t.done && (k !== 'study' || t.due === todayISO)).length;
+      const badge = document.getElementById('badge-' + k);
+      badge.textContent = n;
+      badge.hidden = !n;
     }
+    renderSummary();
+    moveTabIndicator(); // after the badges, since they change tab widths
     const tab = TABS[currentTab];
+    document.getElementById('sectionTitle').textContent = sectionTitle();
+    document.getElementById('sectionTools').innerHTML = tab.calendar ? calViewBar() : '';
     updatePlaceholder();
     quickEl.hidden = !tab.dated;
     if (tab.dated) document.getElementById('quickLabel').textContent = tab.dateLabel;
 
     // Overview is view-only: no add form, always the calendar.
     document.getElementById('addForm').hidden = !!tab.overview;
-    const viewBar = tab.calendar ? calViewBar() : '';
     if (tab.overview || (tab.calendar && getView() === 'calendar')) {
-      listEl.innerHTML = viewBar + calendarHtml();
+      listEl.innerHTML = calendarHtml();
       newId = null;
       return;
     }
 
     const items = data[currentTab];
     if (!items.length) {
-      listEl.innerHTML = `${viewBar}<div class="empty">${ICONS.book}<p>${tab.empty}</p></div>`;
+      listEl.innerHTML = `<div class="empty">${ICONS.book}<p>${tab.empty}</p></div>`;
       return;
     }
     // Study's list shows only today's plan; later lessons sit behind the "upcoming" button.
@@ -748,8 +927,10 @@
       html += `<div class="section-label"><span>Completed (${done.length})</span><button class="link-btn" data-action="clear-done">Clear completed</button></div>`;
       html += `<ul>${done.map(itemHtml).join('')}</ul>`;
     }
-    listEl.innerHTML = viewBar + html;
+    listEl.innerHTML = html;
     newId = null;
+    poppedId = null;
+    if (before) glideFrom(before);
 
     const editInput = listEl.querySelector('.edit-input');
     if (editInput) { editInput.focus(); editInput.select(); }
@@ -782,16 +963,12 @@
         </div>`
       : '';
     if (overview) {
-      return `<div class="view-bar">
-        <span class="legend"><i class="lg-exam"></i>Exam <i class="lg-hw"></i>Assignment</span>${nav}
-      </div>`;
+      return `<span class="legend"><i class="lg-exam"></i>Exam <i class="lg-hw"></i>Assignment</span>${nav}`;
     }
-    return `<div class="view-bar">
-      <div class="seg">
+    return `<div class="seg">
         <button class="${view === 'list' ? 'on' : ''}" data-action="view" data-view="list">List</button>
         <button class="${view === 'calendar' ? 'on' : ''}" data-action="view" data-view="calendar">Calendar</button>
-      </div>${nav}
-    </div>`;
+      </div>${nav}`;
   }
 
   function weekRange(start) {
@@ -887,6 +1064,96 @@
     return html + `<div class="hint">Type a${/^[aeiou]/.test(noun) ? 'n' : ''} ${noun} above, then click a day to add it · Drag ${noun}s to move them</div>`;
   }
 
+  function sectionTitle() {
+    if (currentTab === 'study') return getView() === 'calendar' ? 'Study plan' : 'Today\'s plan';
+    return { projects: 'Assignments & Projects', exams: 'Exams', overview: 'Workload' }[currentTab];
+  }
+
+  // ---- "Today" summary at the top: one card each for lessons, assignments and the next exam ----
+  function renderSummary() {
+    const now = new Date();
+    const h = now.getHours();
+    document.getElementById('greeting').textContent =
+      `${h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'} 👋`;
+
+    const todayISO = toISODate(now);
+    const inDays = n => { const d = new Date(now); d.setDate(d.getDate() + n); return toISODate(d); };
+    const s = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    const when = iso => {
+      const days = Math.round((parseDate(iso) - parseDate(todayISO)) / 864e5);
+      return days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+    };
+
+    // Lessons
+    const todays = data.study.filter(t => t.due === todayISO);
+    const left = todays.filter(t => !t.done).length;
+    const study = left ? { tone: 'ok', value: `${s(left, 'lesson')} left` }
+      : todays.length ? { tone: 'ok', value: 'All done ✓' }
+      : { tone: 'muted', value: 'Nothing planned' };
+    if (todays.length) study.progress = (todays.length - left) / todays.length;
+
+    // Assignments: overdue first, otherwise what's due in the next 7 days
+    const open = data.projects.filter(t => !t.done && t.due);
+    const overdue = open.filter(t => t.due < todayISO).length;
+    const week = open.filter(t => t.due >= todayISO && t.due <= inDays(6));
+    const projects = overdue ? { tone: 'danger', value: `${overdue} overdue` }
+      : week.length ? { tone: week.some(t => t.due <= inDays(1)) ? 'warn' : 'ok', value: `${week.length} due this week` }
+      : { tone: 'muted', value: 'Nothing due' };
+
+    // Next exam
+    const next = data.exams.filter(t => !t.done && t.due >= todayISO).sort((a, b) => a.due.localeCompare(b.due))[0];
+    let exam = { tone: 'muted', value: 'None scheduled' };
+    if (next) {
+      const days = Math.round((parseDate(next.due) - parseDate(todayISO)) / 864e5);
+      exam = { tone: days <= 1 ? 'danger' : days <= 7 ? 'warn' : 'ok', value: `${next.subject || next.text} · ${when(next.due)}` };
+    }
+
+    const ring = p => p === undefined ? '' : `<svg class="ring" viewBox="0 0 36 36" aria-hidden="true">
+        <circle class="ring-bg" cx="18" cy="18" r="15" pathLength="100"/>
+        <circle class="ring-fg" cx="18" cy="18" r="15" pathLength="100" style="stroke-dashoffset:${100 - p * 100}"/></svg>`;
+    const card = (tab, label, info) => `<button class="sum-card tone-${info.tone}${info.progress !== undefined ? ' has-ring' : ''}" data-goto="${tab}">
+        <span class="sum-label">${label}</span><span class="sum-value">${escapeHtml(info.value)}</span>${ring(info.progress)}</button>`;
+
+    const box = document.getElementById('summary');
+    const oldValues = [...box.querySelectorAll('.sum-value')].map(v => v.textContent);
+    const oldRing = box.querySelector('.ring-fg');
+    const oldOffset = oldRing ? oldRing.style.strokeDashoffset : null;
+    box.innerHTML = card('study', 'Today', study) + card('projects', 'Assignments', projects) + card('exams', 'Next exam', exam);
+    if (reduceMotion()) return;
+
+    // Fill the ring from where it was, and give changed values a small bump.
+    const newRing = box.querySelector('.ring-fg');
+    if (newRing && oldOffset !== null && oldOffset !== newRing.style.strokeDashoffset) {
+      const target = newRing.style.strokeDashoffset;
+      newRing.style.transition = 'none';
+      newRing.style.strokeDashoffset = oldOffset;
+      void newRing.getBoundingClientRect();
+      newRing.style.transition = '';
+      newRing.style.strokeDashoffset = target;
+    }
+    box.querySelectorAll('.sum-value').forEach((v, i) => {
+      if (oldValues.length && oldValues[i] !== v.textContent) v.classList.add('bump');
+    });
+  }
+
+  // A short confetti burst when the last lesson of the day is ticked off.
+  function celebrate() {
+    toast('All done for today! 🎉');
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const box = document.createElement('div');
+    box.className = 'confetti';
+    const colors = ['#5b7f6e', '#8fb8a3', '#d9ad66', '#e08a82', '#7a9cc6', '#b48ead'];
+    for (let i = 0; i < 70; i++) {
+      const p = document.createElement('i');
+      p.style.cssText = `left:${Math.random() * 100}%;background:${colors[i % colors.length]};` +
+        `--dx:${(Math.random() - .5) * 160}px;--rot:${Math.random() * 720 - 360}deg;` +
+        `animation-delay:${Math.random() * .3}s;animation-duration:${1.4 + Math.random() * .9}s`;
+      box.appendChild(p);
+    }
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 2800);
+  }
+
   function showFormError(msg, onChips) {
     formError.textContent = msg;
     formError.hidden = !msg;
@@ -958,13 +1225,16 @@
     chip.insertAdjacentHTML('beforeend', `<small>${d.toLocaleDateString('en-US', { weekday: 'short' })}</small>`);
   });
 
-  listEl.addEventListener('click', e => {
+  function handleAction(e) {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     const action = btn.dataset.action;
     if (action === 'clear-done') {
-      data[currentTab] = data[currentTab].filter(t => !t.done);
-      save(); render(); return;
+      removeAnimated([...listEl.querySelectorAll('li.done')], () => {
+        data[currentTab] = data[currentTab].filter(t => !t.done);
+        save(); render();
+      });
+      return;
     }
     if (action === 'view') {
       setView(btn.dataset.view);
@@ -1007,11 +1277,26 @@
     const id = btn.closest('li').dataset.id;
     const items = data[currentTab];
     const task = items.find(t => t.id === id);
-    if (action === 'toggle') task.done = !task.done;
-    if (action === 'delete') data[currentTab] = items.filter(t => t.id !== id);
+    if (action === 'toggle') {
+      task.done = !task.done;
+      if (task.done) poppedId = id;
+    }
+    if (action === 'delete') {
+      removeAnimated([btn.closest('li')], () => {
+        data[currentTab] = data[currentTab].filter(t => t.id !== id);
+        save(); render();
+      });
+      return;
+    }
     if (action === 'edit') { editingId = id; render(); return; }
     save(); render();
-  });
+    if (action === 'toggle' && task.done && currentTab === 'study' && task.due === toISODate(new Date())
+        && !data.study.some(t => !t.done && t.due === task.due)) {
+      celebrate();
+    }
+  }
+  listEl.addEventListener('click', handleAction);
+  document.getElementById('sectionTools').addEventListener('click', handleAction);
 
   listEl.addEventListener('dblclick', e => {
     const li = e.target.closest('li');
@@ -1115,15 +1400,24 @@
     save(); render();
   });
 
-  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-    currentTab = b.dataset.tab;
+  function switchTab(name) {
+    currentTab = name;
     editingId = null;
     pickedId = null;
     showFormError('');
     localStorage.setItem('study-todo-tab', currentTab);
     render();
-    input.focus();
-  }));
+    // Replay the fade so switching tabs feels smooth.
+    for (const el of [listEl, document.querySelector('.section-bar')]) {
+      el.classList.remove('fade'); void el.offsetWidth; el.classList.add('fade');
+    }
+    if (matchMedia('(hover: hover)').matches) input.focus();
+  }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  document.getElementById('summary').addEventListener('click', e => {
+    const card = e.target.closest('[data-goto]');
+    if (card) switchTab(card.dataset.goto);
+  });
 
   // Backup export / import
   document.getElementById('exportBtn').addEventListener('click', () => {
@@ -1172,14 +1466,41 @@
     return { study: clean(d.study), projects: clean(d.projects), exams: clean(Array.isArray(d.exams) ? d.exams : []), subjects };
   }
 
+  // A pill that slides behind the active tab.
+  function moveTabIndicator() {
+    const ind = document.getElementById('tabInd');
+    const active = document.querySelector('.tab.active');
+    if (!active) return;
+    ind.style.left = active.offsetLeft + 'px';
+    ind.style.top = active.offsetTop + 'px';
+    ind.style.width = active.offsetWidth + 'px';
+    ind.style.height = active.offsetHeight + 'px';
+    // Skip the slide on the very first placement.
+    if (!ind.classList.contains('ready')) requestAnimationFrame(() => ind.classList.add('ready'));
+  }
+  addEventListener('resize', moveTabIndicator);
+  if (document.fonts) document.fonts.ready.then(moveTabIndicator);
+
   const themeBtn = document.getElementById('themeBtn');
   function applyTheme(theme) {
     document.documentElement.dataset.theme = theme;
     themeBtn.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
     localStorage.setItem('study-todo-theme', theme);
   }
+  let themeTimer;
   themeBtn.addEventListener('click', () => {
-    applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+    const root = document.documentElement;
+    const animate = !reduceMotion();
+    if (animate) {
+      // Briefly let every colour fade instead of snapping, and spin the icon.
+      root.classList.add('theme-anim');
+      clearTimeout(themeTimer);
+      themeTimer = setTimeout(() => root.classList.remove('theme-anim'), 450);
+    }
+    applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+    if (animate) {
+      themeBtn.classList.remove('spin'); void themeBtn.offsetWidth; themeBtn.classList.add('spin');
+    }
   });
   applyTheme(localStorage.getItem('study-todo-theme') ||
     (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
