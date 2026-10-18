@@ -377,6 +377,43 @@
   .ex b, .ex span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ex b { font-weight: 700; }
   .ex.done { opacity: .5; text-decoration: line-through; }
+  .ex.picked { outline: 2px solid hsl(var(--h) 40% 45%); outline-offset: 1px; }
+  .ex[draggable="true"] { cursor: grab; }
+
+  /* Overview (read-only): exams are solid, assignments are outlined */
+  .cal.read-only .day, .cal.read-only .ex { cursor: default; }
+  .cal.read-only .day:hover { background: none; }
+  .cal.read-only .day.weekend:hover { background: color-mix(in srgb, var(--bg) 60%, transparent); }
+  .ex em { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; font-size: .6rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; opacity: .75; }
+  .cal.read-only .ex:not(.is-exam) { background: transparent; border: 1px solid hsl(var(--h) 40% 60%); border-inline-start-width: 3px; }
+  .ex.is-exam { background: hsl(var(--h) 45% 84%); border-inline-start-width: 4px; }
+  [data-theme="dark"] .ex.is-exam { background: hsl(var(--h) 30% 30%); }
+  .legend { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--muted); }
+  .legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; }
+  .legend .lg-exam { background: var(--accent); margin-inline-start: 2px; }
+  .legend .lg-hw { border: 1.5px solid var(--accent); margin-inline-start: 8px; }
+  .day.past .ex.late { opacity: 1; border-inline-start-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+  .ex.dragging { opacity: .35; }
+  .day.drop-target, .unsched.drop-target { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+  .unsched { border-radius: 12px; transition: background .15s; }
+  .unsched-list:empty { min-height: 34px; border: 1px dashed var(--border); border-radius: 10px; }
+
+  .more-btn {
+    display: block; width: 100%;
+    border: none; border-top: 1px solid var(--border);
+    background: var(--bg); color: var(--accent);
+    font: inherit; font-size: .85rem; font-weight: 500;
+    padding: 10px; cursor: pointer;
+  }
+  .more-btn:hover { background: var(--accent-soft); }
+  ul.upcoming { border-top: 1px solid var(--border); }
+  ul.upcoming li { opacity: .75; }
+
+  .unsched { padding: 4px 12px 14px; }
+  .unsched-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: .8rem; margin-bottom: 8px; }
+  .unsched-head span { color: var(--muted); }
+  .unsched-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .unsched .ex { max-width: 200px; }
   .ex:hover { filter: brightness(.96); }
   [data-theme="dark"] .ex {
     background: hsl(var(--h) 25% 23%);
@@ -414,6 +451,7 @@
     <button class="tab" data-tab="study">Study <span class="badge" id="badge-study">0</span></button>
     <button class="tab" data-tab="projects">Assignments &amp; Projects <span class="badge" id="badge-projects">0</span></button>
     <button class="tab" data-tab="exams">Exams <span class="badge" id="badge-exams">0</span></button>
+    <button class="tab" data-tab="overview">Overview</button>
   </nav>
 
   <div class="card">
@@ -458,9 +496,13 @@
   };
 
   const TABS = {
-    study: { placeholder: 'Add a topic to study...', empty: 'No study topics yet' },
-    projects: { placeholder: 'Add an assignment or project...', empty: 'No assignments or projects yet', dated: true, draggable: true, dateLabel: 'Due:' },
-    exams: { placeholder: 'Add an exam...', empty: 'No exams yet', dated: true, sortByDate: true, dateLabel: 'Exam on:' }
+    study: { placeholder: 'Add a topic to study...', empty: 'No study topics yet', optionalDate: true,
+      calendar: { noun: 'lesson', levels: [1, 6, 11] } },
+    projects: { placeholder: 'Add an assignment or project...', empty: 'No assignments or projects yet', dated: true, draggable: true, dateLabel: 'Due:',
+      calendar: { noun: 'assignment', levels: [1, 3, 5] } },
+    exams: { placeholder: 'Add an exam...', empty: 'No exams yet', dated: true, sortByDate: true, dateLabel: 'Exam on:',
+      calendar: { noun: 'exam', levels: [1, 2, 3] } },
+    overview: { overview: true, placeholder: '', empty: '', calendar: { noun: 'item', levels: [1, 3, 5] } }
   };
 
   const STORAGE_KEY = 'study-todo-data';
@@ -611,6 +653,13 @@
       else if (days === 1) { label = 'Exam tomorrow'; cls = 'overdue'; }
       else { label = `${date} · in ${days} days`; if (days <= 7) cls = 'soon'; }
     }
+    else if (currentTab === 'study') {
+      if (t.done) label = `Planned for ${date}`;
+      else if (days < 0) { label = `Planned for ${date} · not done yet`; cls = 'overdue'; }
+      else if (days === 0) { label = 'Study today'; cls = 'soon'; }
+      else if (days === 1) label = 'Study tomorrow';
+      else label = `Planned for ${date}`;
+    }
     else if (t.done) label = `Due ${date}`;
     else if (days < 0) { label = `Overdue by ${-days} day${plural(-days)} · ${date}`; cls = 'overdue'; }
     else if (days === 0) { label = 'Due today'; cls = 'soon'; }
@@ -629,9 +678,9 @@
       ? `<div class="edit-wrap">
           ${subjectOptions ? `<select class="edit-subject"><option value="">No subject</option>${subjectOptions}</select>` : ''}
           <input class="edit-input" value="${escapeHtml(t.text)}" maxlength="200">
-          ${tab.dated ? `<input class="edit-date" type="date" value="${t.due || ''}">` : ''}
+          ${tab.dated || tab.optionalDate ? `<input class="edit-date" type="date" value="${t.due || ''}" title="${tab.optionalDate ? 'Leave empty for no date' : 'Date'}">` : ''}
         </div>`
-      : `<div class="content"><span class="text">${subjectTag(t.subject)}${escapeHtml(t.text)}</span>${tab.dated ? dueHtml(t) : ''}</div>`;
+      : `<div class="content"><span class="text">${subjectTag(t.subject)}${escapeHtml(t.text)}</span>${tab.dated || tab.optionalDate ? dueHtml(t) : ''}</div>`;
     return `<li class="${t.done ? 'done' : ''} ${t.id === newId ? 'new' : ''}" data-id="${t.id}"${draggable ? ' draggable="true"' : ''}>
       ${draggable ? `<span class="grip" title="Drag to reorder">${ICONS.grip}</span>` : ''}
       <button class="check" data-action="toggle" aria-label="${t.done ? 'Mark as not done' : 'Mark as done'}">${ICONS.check}</button>
@@ -645,16 +694,22 @@
 
   function render() {
     document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
+    const todayISO = toISODate(new Date());
     for (const k of Object.keys(TABS)) {
-      document.getElementById('badge-' + k).textContent = data[k].filter(t => !t.done).length;
+      if (TABS[k].overview) continue;
+      // Study's list is a daily plan, so its badge counts only today's lessons.
+      document.getElementById('badge-' + k).textContent =
+        data[k].filter(t => !t.done && (k !== 'study' || t.due === todayISO)).length;
     }
     const tab = TABS[currentTab];
     updatePlaceholder();
     quickEl.hidden = !tab.dated;
     if (tab.dated) document.getElementById('quickLabel').textContent = tab.dateLabel;
 
-    const viewBar = currentTab === 'exams' ? examViewBar() : '';
-    if (currentTab === 'exams' && examView === 'calendar') {
+    // Overview is view-only: no add form, always the calendar.
+    document.getElementById('addForm').hidden = !!tab.overview;
+    const viewBar = tab.calendar ? calViewBar() : '';
+    if (tab.overview || (tab.calendar && getView() === 'calendar')) {
       listEl.innerHTML = viewBar + calendarHtml();
       newId = null;
       return;
@@ -665,16 +720,29 @@
       listEl.innerHTML = `${viewBar}<div class="empty">${ICONS.book}<p>${tab.empty}</p></div>`;
       return;
     }
-    const pending = items.filter(t => !t.done);
-    const done = items.filter(t => t.done);
-    // Exams always show nearest first; "YYYY-MM-DD" strings sort correctly as text.
-    if (tab.sortByDate) pending.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+    // Study's list shows only today's plan; later lessons sit behind the "upcoming" button.
+    const daily = currentTab === 'study';
+    const shown = daily ? items.filter(t => t.due === todayISO) : items;
+    const pending = shown.filter(t => !t.done);
+    const done = shown.filter(t => t.done);
+    // "YYYY-MM-DD" strings sort correctly as text.
+    const byDue = (a, b) => (a.due || '9999').localeCompare(b.due || '9999');
+    if (tab.sortByDate) pending.sort(byDue);
+    const upcoming = daily ? items.filter(t => !t.done && t.due > todayISO).sort(byDue) : [];
     let html = '';
     if (pending.length) {
       html += `<ul id="pendingList">${pending.map(itemHtml).join('')}</ul>`;
       if (tab.draggable && pending.length > 1) html += `<div class="hint">Drag items to put the most important first</div>`;
+    } else if (daily && !done.length) {
+      html += `<div class="empty"><p>Nothing planned for today</p></div>`;
     } else {
       html += `<div class="empty"><p>Well done! Everything is finished 🎉</p></div>`;
+    }
+    if (upcoming.length) {
+      html += `<button class="more-btn" data-action="toggle-upcoming">${showUpcoming
+        ? 'Hide upcoming lessons'
+        : `+ ${upcoming.length} upcoming lesson${upcoming.length === 1 ? '' : 's'}`}</button>`;
+      if (showUpcoming) html += `<ul class="upcoming">${upcoming.map(itemHtml).join('')}</ul>`;
     }
     if (done.length) {
       html += `<div class="section-label"><span>Completed (${done.length})</span><button class="link-btn" data-action="clear-done">Clear completed</button></div>`;
@@ -687,9 +755,14 @@
     if (editInput) { editInput.focus(); editInput.select(); }
   }
 
-  // ---- Exams: list / weekly calendar ----
-  let examView = localStorage.getItem('study-todo-exam-view') === 'calendar' ? 'calendar' : 'list';
+  // ---- Study & Exams: list / weekly calendar ----
+  // Each tab remembers its own view; exams keep their original storage key.
+  const VIEW_KEYS = { study: 'study-todo-study-view', projects: 'study-todo-projects-view', exams: 'study-todo-exam-view' };
+  function getView() { return localStorage.getItem(VIEW_KEYS[currentTab]) === 'calendar' ? 'calendar' : 'list'; }
+  function setView(v) { localStorage.setItem(VIEW_KEYS[currentTab], v); }
   let calOffset = 0; // in weeks, relative to the current week
+  let pickedId = null; // unscheduled study lesson waiting for a day click
+  let showUpcoming = false;
   const CAL_WEEKS = 6;
   const LOAD = [
     { name: 'Free', cls: 'lvl-0' },
@@ -698,18 +771,25 @@
     { name: 'Busy', cls: 'lvl-3' }
   ];
 
-  function examViewBar() {
-    const nav = examView === 'calendar'
+  function calViewBar() {
+    const overview = !!TABS[currentTab].overview;
+    const view = overview ? 'calendar' : getView();
+    const nav = view === 'calendar'
       ? `<div class="cal-nav">
           <button class="nav-btn" data-action="cal-prev" title="Earlier weeks">‹</button>
           <button class="nav-btn" data-action="cal-today">This week</button>
           <button class="nav-btn" data-action="cal-next" title="Later weeks">›</button>
         </div>`
       : '';
+    if (overview) {
+      return `<div class="view-bar">
+        <span class="legend"><i class="lg-exam"></i>Exam <i class="lg-hw"></i>Assignment</span>${nav}
+      </div>`;
+    }
     return `<div class="view-bar">
       <div class="seg">
-        <button class="${examView === 'list' ? 'on' : ''}" data-action="view" data-view="list">List</button>
-        <button class="${examView === 'calendar' ? 'on' : ''}" data-action="view" data-view="calendar">Calendar</button>
+        <button class="${view === 'list' ? 'on' : ''}" data-action="view" data-view="list">List</button>
+        <button class="${view === 'calendar' ? 'on' : ''}" data-action="view" data-view="calendar">Calendar</button>
       </div>${nav}
     </div>`;
   }
@@ -728,39 +808,83 @@
     const first = new Date(today);
     first.setDate(first.getDate() - first.getDay() + calOffset * 7); // weeks start on Sunday
 
+    // Overview is read-only and merges assignments and exams; every item counts the same.
+    const overview = !!TABS[currentTab].overview;
+    const { noun, levels } = TABS[currentTab].calendar;
+    const plural = (n, word = noun) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    const items = overview
+      ? [...data.projects.map(t => ({ ...t, kind: 'projects' })), ...data.exams.map(t => ({ ...t, kind: 'exams' }))]
+      : data[currentTab].map(t => ({ ...t, kind: currentTab }));
     const byDate = {};
-    for (const t of data.exams) if (t.due) (byDate[t.due] = byDate[t.due] || []).push(t);
+    for (const t of items) if (t.due) (byDate[t.due] = byDate[t.due] || []).push(t);
+    // Unfinished assignments past their due date stay bright and red instead of fading with the day.
+    const isLate = t => t.kind === 'projects' && !t.done && t.due && t.due < todayISO;
+    const chipHtml = t => {
+      const kindLabel = overview ? `<em>${t.kind === 'exams' ? 'Exam' : 'Due'}</em>` : '';
+      const interactive = overview ? '' : `data-action="${t.due ? 'cal-item' : 'pick'}" draggable="true"`;
+      return `<div class="ex${t.done ? ' done' : ''}${t.id === pickedId ? ' picked' : ''}${isLate(t) ? ' late' : ''}${overview && t.kind === 'exams' ? ' is-exam' : ''}"
+        ${interactive} data-id="${t.id}"
+        style="--h:${t.subject ? subjectHue(t.subject) : 150}" title="${escapeHtml((t.subject ? t.subject + ' — ' : '') + t.text)}">
+        ${kindLabel}${t.subject ? `<b>${escapeHtml(t.subject)}</b>` : ''}<span>${escapeHtml(t.text)}</span></div>`;
+    };
 
     const dow = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    let html = `<div class="cal"><div class="cal-dow">${dow.map(d => `<span>${d}</span>`).join('')}</div>`;
+    let html = `<div class="cal${overview ? ' read-only' : ''}"><div class="cal-dow">${dow.map(d => `<span>${d}</span>`).join('')}</div>`;
 
     for (let w = 0; w < CAL_WEEKS; w++) {
       const start = new Date(first); start.setDate(start.getDate() + w * 7);
-      let days = '', count = 0;
+      let days = '', count = 0, exams = 0;
       for (let i = 0; i < 7; i++) {
         const d = new Date(start); d.setDate(d.getDate() + i);
         const iso = toISODate(d);
-        const exams = byDate[iso] || [];
-        count += exams.filter(t => !t.done).length;
-        const chips = exams.map(t => `<div class="ex${t.done ? ' done' : ''}" data-action="cal-exam" data-id="${t.id}"
-            style="--h:${t.subject ? subjectHue(t.subject) : 150}" title="${escapeHtml((t.subject ? t.subject + ' — ' : '') + t.text)}">
-            ${t.subject ? `<b>${escapeHtml(t.subject)}</b>` : ''}<span>${escapeHtml(t.text)}</span></div>`).join('');
+        const dayItems = byDate[iso] || [];
+        // Exams first within a day so they stand out.
+        if (overview) dayItems.sort((a, b) => (a.kind === 'exams' ? 0 : 1) - (b.kind === 'exams' ? 0 : 1));
+        const open = dayItems.filter(t => !t.done);
+        count += open.length;
+        exams += open.filter(t => t.kind === 'exams').length;
         const cls = ['day', iso === todayISO ? 'today' : '', d < today ? 'past' : '', i >= 5 ? 'weekend' : ''].join(' ');
-        days += `<div class="${cls}" data-action="cal-day" data-date="${iso}" title="Add exam on ${d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}">
-          <span class="dnum">${d.getDate()}</span>${chips}</div>`;
+        const dateLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        const attrs = overview
+          ? `title="${dateLabel}"`
+          : `data-action="cal-day" data-date="${iso}" title="${pickedId ? 'Schedule on' : `Add ${noun} on`} ${dateLabel}"`;
+        days += `<div class="${cls}" ${attrs}><span class="dnum">${d.getDate()}</span>${dayItems.map(chipHtml).join('')}</div>`;
       }
-      const load = LOAD[Math.min(count, 3)];
+      const level = levels.filter(min => count >= min).length;
+      const load = LOAD[level];
       const isThisWeek = calOffset + w === 0;
+      const summary = !count ? ''
+        : overview ? ` · ${[exams && plural(exams, 'exam'), count - exams && plural(count - exams, 'assignment')].filter(Boolean).join(' + ')}`
+        : ` · ${plural(count)}`;
       html += `<div class="week ${load.cls}">
         <div class="week-head">
           <span class="week-range">${weekRange(start)}${isThisWeek ? '<span class="this-week">This week</span>' : ''}</span>
-          <span class="load"><span class="meter">${[1, 2, 3].map(n => `<i class="${count >= n ? 'f' : ''}"></i>`).join('')}</span>
-            ${load.name}${count ? ` · ${count} exam${count === 1 ? '' : 's'}` : ''}</span>
+          <span class="load"><span class="meter">${[1, 2, 3].map(n => `<i class="${level >= n ? 'f' : ''}"></i>`).join('')}</span>
+            ${load.name}${summary}</span>
         </div>
         <div class="days">${days}</div>
       </div>`;
     }
-    return html + `</div><div class="hint">Type an exam above, then click a day to add it</div>`;
+    html += '</div>';
+
+    if (overview) {
+      return html + `<div class="hint">Assignments and exams together · To change something, edit it in its own tab</div>`;
+    }
+
+    // Study lessons without a date wait here until they're given a day.
+    if (TABS[currentTab].optionalDate) {
+      // Always rendered so a lesson can be dragged back here to clear its date.
+      const unscheduled = items.filter(t => !t.due && !t.done);
+      const picked = unscheduled.find(t => t.id === pickedId);
+      html += `<div class="unsched">
+        <div class="unsched-head"><b>Unscheduled (${unscheduled.length})</b>
+          <span>${picked ? `Now click a day for “${escapeHtml(picked.text)}”`
+            : unscheduled.length ? 'Drag a lesson onto a day, or click it then click a day'
+            : 'Drag a lesson here to remove its date'}</span></div>
+        <div class="unsched-list">${unscheduled.map(chipHtml).join('')}</div>
+      </div>`;
+    }
+    return html + `<div class="hint">Type a${/^[aeiou]/.test(noun) ? 'n' : ''} ${noun} above, then click a day to add it · Drag ${noun}s to move them</div>`;
   }
 
   function showFormError(msg, onChips) {
@@ -787,7 +911,9 @@
     }
     const task = { id: makeId(), text, done: false };
     if (selectedSubject) task.subject = selectedSubject;
-    if (dated) task.due = due;
+    // A lesson added from Study's list goes on today's plan, otherwise it would vanish from view.
+    if (!due && currentTab === 'study' && getView() === 'list') due = toISODate(new Date());
+    if (due) task.due = due;
     showFormError('');
     data[currentTab].unshift(task);
     newId = task.id;
@@ -841,8 +967,16 @@
       save(); render(); return;
     }
     if (action === 'view') {
-      examView = btn.dataset.view;
-      localStorage.setItem('study-todo-exam-view', examView);
+      setView(btn.dataset.view);
+      pickedId = null;
+      render(); return;
+    }
+    if (action === 'toggle-upcoming') {
+      showUpcoming = !showUpcoming;
+      render(); return;
+    }
+    if (action === 'pick') {
+      pickedId = pickedId === btn.dataset.id ? null : btn.dataset.id;
       render(); return;
     }
     if (action === 'cal-prev' || action === 'cal-next' || action === 'cal-today') {
@@ -850,17 +984,23 @@
       render(); return;
     }
     if (action === 'cal-day') {
+      const picked = pickedId && data[currentTab].find(t => t.id === pickedId);
+      if (picked) {
+        picked.due = btn.dataset.date;
+        pickedId = null;
+        save(); render(); return;
+      }
       if (!input.value.trim()) {
-        showFormError('Type the exam name above, then click the day.');
+        showFormError(`Type the ${TABS[currentTab].calendar.noun} name above, then click the day.`);
         input.focus();
         return;
       }
       addTask(btn.dataset.date); return;
     }
-    if (action === 'cal-exam') {
-      // Open the exam for editing in the list view.
-      examView = 'list';
-      localStorage.setItem('study-todo-exam-view', examView);
+    if (action === 'cal-item') {
+      // Open the item for editing in the list view.
+      setView('list');
+      pickedId = null;
       editingId = btn.dataset.id;
       render(); return;
     }
@@ -888,6 +1028,7 @@
       const subject = wrap.querySelector('.edit-subject');
       if (text) task.text = text;
       if (date && date.value) task.due = date.value;
+      else if (date && TABS[currentTab].optionalDate) delete task.due;
       if (subject) { if (subject.value) task.subject = subject.value; else delete task.subject; }
     }
     save(); render();
@@ -902,6 +1043,46 @@
     const wrap = e.target.closest('.edit-wrap');
     // Moving focus between the text and date fields keeps the edit open.
     if (wrap && !wrap.contains(e.relatedTarget)) finishEdit(wrap, true);
+  });
+
+  // Calendar drag and drop: move a lesson/exam to another day, or (Study) back to Unscheduled.
+  let calDragId = null;
+  const calDropZone = e => e.target.closest('.day[data-date], .unsched');
+  function clearDropTargets() { listEl.querySelectorAll('.drop-target').forEach(z => z.classList.remove('drop-target')); }
+  listEl.addEventListener('dragstart', e => {
+    const chip = e.target.closest('.ex[data-id]');
+    if (!chip) return;
+    calDragId = chip.dataset.id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', calDragId);
+    requestAnimationFrame(() => chip.classList.add('dragging'));
+  });
+  listEl.addEventListener('dragover', e => {
+    if (!calDragId) return;
+    const zone = calDropZone(e);
+    if (!zone) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!zone.classList.contains('drop-target')) { clearDropTargets(); zone.classList.add('drop-target'); }
+  });
+  listEl.addEventListener('drop', e => {
+    if (!calDragId) return;
+    e.preventDefault();
+    const zone = calDropZone(e);
+    const item = data[currentTab].find(t => t.id === calDragId);
+    calDragId = null;
+    if (zone && item) {
+      if (zone.dataset.date) item.due = zone.dataset.date;
+      else if (TABS[currentTab].optionalDate) delete item.due;
+      if (pickedId === item.id) pickedId = null;
+      save();
+    }
+    render();
+  });
+  listEl.addEventListener('dragend', () => {
+    if (!calDragId) return; // already handled by drop
+    calDragId = null;
+    render();
   });
 
   // Drag and drop reordering (pending assignments & projects only).
@@ -937,6 +1118,7 @@
   document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
     currentTab = b.dataset.tab;
     editingId = null;
+    pickedId = null;
     showFormError('');
     localStorage.setItem('study-todo-tab', currentTab);
     render();
